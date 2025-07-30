@@ -21,38 +21,49 @@ function save_to_png_single(image_id,
 							 nx,
 							 ny,
 							 rescale,
+							 tf_add_scale_bar,
+							 scale_bar_color,
 							 sb_length,
 							 lut_choice,
 							 input_folder, 
 							 save_name) { 
+	
 	
 	// Make sure the correct image is selected
 	selectImage(image_id);
 
 	// Duplicate for processing
 	run("Duplicate...", " ");
+	image_id_1_d = getTitle();
 	
 	// Adjust contrast
 	setMinAndMax(min_contrast, max_contrast);
 	run("Apply LUT");
 
-	// Upscale if needed
+	// Upscale if needed, immediately deleting the original
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		image_id_1_d_new = getTitle();
+		close(image_id_1_d);
+		image_id_1_d = image_id_1_d_new;
+		selectImage(image_id_1_d);
 	} // END if (rescale > 1)
 			
 	// Apply LUT
 	run(lut_choice);
 	
 	// Add scalebar
-	run("Scale Bar...", "width=" + sb_length + " height=5 thickness=20 font=50 bold overlay");
+	if (tf_add_scale_bar)
+	{
+		run("Scale Bar...", "width=" + sb_length + " height=5 thickness=" + round(ny / 50) +" color="+ scale_bar_color+" font=" + round(ny / 20) +" bold overlay");
+	}
 	
 	// Write
     saveAs("PNG", input_folder + save_name + ".png");
 	
 	// Close duplicated channel image
-	close();					
+	close();
 }
 
 function save_to_png_dual(image_id_1, 
@@ -64,46 +75,65 @@ function save_to_png_dual(image_id_1,
 						   nx,
 						   ny,
 						   rescale,
+						   tf_add_scale_bar,
+						   scale_bar_color,
 						   sb_length,
 						   lut_choice_1,						   
 						   lut_choice_2,
 						   input_folder, 
 						   save_name) { 
-	
+
 	// Adjust contrast, apply LUT, and rescale as needed
 	selectImage(image_id_1);
-	run("Duplicate...", " ");	
+	run("Duplicate...", " ");
+	rename("image1_d");
 	image_id_1_d = getTitle();
 	setMinAndMax(min_contrast_1, max_contrast_1);
 	run("Apply LUT");
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		rename("image1_d_new");
+		image_id_1_d_new = getTitle();
+		close(image_id_1_d);
+		image_id_1_d = image_id_1_d_new;
+		selectImage(image_id_1_d);
 	} // END if (rescale > 1)
 	run(lut_choice_1);
 	
 	selectImage(image_id_2);
 	run("Duplicate...", " ");	
+	rename("image2_d");
 	image_id_2_d = getTitle();
 	setMinAndMax(min_contrast_2, max_contrast_2);
 	run("Apply LUT");
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		rename("image2_d_new");
+		image_id_2_d_new = getTitle();
+		close(image_id_2_d);
+		image_id_2_d = image_id_2_d_new;
+		selectImage(image_id_2_d);
 	} // END if (rescale > 1)
 	run(lut_choice_2);
 			
+	
 	// Create overlay - this also implicitly closes the single-channel image working copies
 	run("Merge Channels...", "c1=" + image_id_1_d + " c2=" + image_id_2_d + " create");
 		
+		
 	// Add scalebar
-	run("Scale Bar...", "width=" + sb_length + " height=5 thickness=20 font=50 bold overlay");
+	if (tf_add_scale_bar)
+	{
+		run("Scale Bar...", "width=" + sb_length + " height=5 thickness=" + round(ny / 50) + " color="+ scale_bar_color + " font=" + round(ny / 20) +" bold overlay");
+	}
 	
 	// Write
     saveAs("PNG", input_folder + save_name + ".png");
 	
 	// Close overlay image image
-	close();					
+	close();		
 }
 
 
@@ -119,6 +149,8 @@ function save_to_png_triple(image_id_1,
 					  		 nx,
 					  		 ny,
 					  		 rescale,
+					  		 tf_add_scale_bar,
+					  		 scale_bar_color,
 					  		 sb_length,
 					  		 lut_choice_1,						   
 					  		 lut_choice_2,
@@ -129,48 +161,71 @@ function save_to_png_triple(image_id_1,
 	// Adjust contrast, apply LUT, and rescale as needed
 	selectImage(image_id_1);
 	run("Duplicate...", " ");	
+	rename("image1_d");
 	image_id_1_d = getTitle();
 	setMinAndMax(min_contrast_1, max_contrast_1);
 	run("Apply LUT");
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		rename("image1_d_new");
+		image_id_1_d_new = getTitle();
+		close(image_id_1_d);
+		image_id_1_d = image_id_1_d_new;
+		selectImage(image_id_1_d);
 	} // END if (rescale > 1)
 	run(lut_choice_1);
 	
 	selectImage(image_id_2);
-	run("Duplicate...", " ");	
+	run("Duplicate...", " ");
+	rename("image2_d");
 	image_id_2_d = getTitle();
 	setMinAndMax(min_contrast_2, max_contrast_2);
 	run("Apply LUT");
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		rename("image2_d_new");
+		image_id_2_d_new = getTitle();
+		close(image_id_2_d);
+		image_id_2_d = image_id_2_d_new;
+		selectImage(image_id_2_d);
 	} // END if (rescale > 1)
 	run(lut_choice_2);
 	
 	selectImage(image_id_3);
-	run("Duplicate...", " ");	
+	run("Duplicate...", " ");
+	rename("image3_d");
 	image_id_3_d = getTitle();
 	setMinAndMax(min_contrast_3, max_contrast_3);
 	run("Apply LUT");
 	if (rescale > 1)
 	{
-		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None");
+		run("Scale...", "x=" + rescale + " y=" + rescale + " width=" + nx * rescale + " height=" + ny * rescale + " interpolation=None create");
+		rename("image3_d_new");
+		image_id_3_d_new = getTitle();
+		close(image_id_3_d);
+		image_id_3_d = image_id_3_d_new;
+		selectImage(image_id_1_d);
 	} // END if (rescale > 1)
 	run(lut_choice_3);
 			
 	// Create overlay - this also implicitly closes the single-channel image working copies
 	run("Merge Channels...", "c1=" + image_id_1_d + " c2=" + image_id_2_d + " c3=" + image_id_3_d + " create");
 		
+		
 	// Add scalebar
-	run("Scale Bar...", "width=" + sb_length + " height=5 thickness=20 font=50 bold overlay");
+	if (tf_add_scale_bar)
+	{
+		run("Scale Bar...", "width=" + sb_length + " height=5 thickness=" + round(ny / 50) + " color="+ scale_bar_color + " font=" + round(ny / 20) +" bold overlay");
+	}
 	
 	// Write
     saveAs("PNG", input_folder + save_name + ".png");
 	
 	// Close overlay image image
-	close();					
+	close();	
 }
 
 
@@ -252,6 +307,8 @@ for (i = 0; i < file_list.length; i++)
 				
 			} // END for (i_ch=1; i_ch ...
 
+			Dialog.addCheckbox("Add scalebar?", true);
+			
 			// User interaction
 			Dialog.show();
 			
@@ -274,6 +331,8 @@ for (i = 0; i < file_list.length; i++)
 					
 			} //END for (i_ch=1; i_ch ...
 			
+			tf_add_scale_bar =  Dialog.getCheckbox();
+								
 			settings_done = true;
 		} //END  if (settings_done == false)
 
@@ -316,6 +375,7 @@ for (i = 0; i < file_list.length; i++)
 			run("Measure");
 			
 			// Preparation for saving
+			i_ch = 1;
 			image_id = getImageID();
 			save_name = file_name_strip[0] + "_ch" + i_ch;
 			
@@ -326,11 +386,12 @@ for (i = 0; i < file_list.length; i++)
 							   nx,
 							   ny,
 							   rescale,
+							   tf_add_scale_bar,
+							   "White",
 							   sb_length,
 							   luts_single[i_ch-1],
 							   input_folder, 
-							   save_name);
-							   
+							   save_name);				   
 		   // Close raw image
 		   close();
 		   
@@ -367,10 +428,12 @@ for (i = 0; i < file_list.length; i++)
 									   nx,
 									   ny,
 									   rescale,
+									   tf_add_scale_bar,
+									   "White",
 									   sb_length,
 									   luts_single[i_ch-1],
 									   input_folder, 
-									   save_name);
+									   save_name);	
 				} // END for (i_ch=1; i_ch <= nchannels; i_ch++)
 			} // END if (tf_get_single)
 
@@ -403,6 +466,8 @@ for (i = 0; i < file_list.length; i++)
 							  			 nx,
 							  			 ny,
 							  			 rescale,
+							  			 tf_add_scale_bar,
+							  			 "White",
 							  			 sb_length,
 							  			 luts_overlay[i_ch_1-1],						   
 							  			 luts_overlay[i_ch_2-1],
@@ -447,6 +512,8 @@ for (i = 0; i < file_list.length; i++)
 								  			   nx,
 								  			   ny,
 								  			   rescale,
+								  			   tf_add_scale_bar,
+								  			   "White",
 								  			   sb_length,
 								  			   luts_overlay[i_ch_1-1],						   
 								  			   luts_overlay[i_ch_2-1],

@@ -407,6 +407,7 @@ if (imagingMode ==  "Fluorescence/multi-channel")
 					run("Measure");
 					
 					// Preparation for saving
+					i_ch = 1;
 					image_id = getTitle();
 					save_name = file_name_strip[0] + "_scene" + resolutionLevelIndex + "_ch" + i_ch;
 					
