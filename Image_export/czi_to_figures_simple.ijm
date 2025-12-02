@@ -537,3 +537,5 @@ for (i = 0; i < file_list.length; i++)
 
 // Save table
 saveAs("Results", input_folder  + "Greyscale_stats.csv");
+
+print("Job done.");

@@ -277,9 +277,9 @@ if (imagingMode ==  "Fluorescence/multi-channel")
 			//Ext.getCurrentFile(file_list[i]);
 			Ext.getSeriesCount(seriesCount);
 			
-			for (resolutionLevelIndex = resolutionLevel; resolutionLevelIndex < seriesCount - 2; resolutionLevelIndex += 6)
+			for (resolutionLevelIndex = resolutionLevel; resolutionLevelIndex < seriesCount - 1; resolutionLevelIndex += 6)
 			{
-				if (resolutionLevelIndex < 10) {rLIAppend = "0";} else {rLIAppend = "";};
+				if ((resolutionLevelIndex < 10) & (seriesCount >= 10)) {rLIAppend = "0";} else {rLIAppend = "";};
 				
 				// Open file, skipping BioFormats import wizard pop-up
 				s = "open=[" + in_path + "] series_"+resolutionLevelIndex +" autoscale color_mode=Grayscale rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT";
@@ -762,3 +762,5 @@ if (imagingMode ==  "Fluorescence/multi-channel")
 		} // END if (endsWith(in_path, ".czi")) 
 	} // END for (i = 0; i < file_list.length; i++)
 } // END if (imagingMode ==  "RBG brightfield") 
+
+print("Job done.");
