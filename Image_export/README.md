@@ -2,9 +2,12 @@
 
 The scripts collected here are miscellaneous scripts for automatically (batch) exporting data from propriotary image data formats into formats usable elsewhere. This may also include automated image processing steps.
 
-**czi_scences_to_tiling_RGB.py** (Python script) iterates over multi-scene czi files where each scene is a single 
-image or xy tile scan (RGB true color). It stitches those scences into a single large image and imputes the RGB value for the surrounding empty areas to avoid discontinuities. The result is written for 24 bit RBG format data. It was originally developed on and for Zeiss AxioScan Z1 image data of Tissue Microsection Arrays where the definition of ROIs and as a consequence storage of data ended up weird. 
-Doing similar processing for fluorescence images will require adaptation of the script, although that will be simple. It simply has not been done. Feel free to contact the maintainer of the repo to inquire for such an alteration if you have an application for that.
+**czi_scences_to_tiling.py** (Python script) iterates over multi-scene czi files where each scene is a single image or xy tile scan. It stitches those scences into a single large image and imputes the greyscale value(s) for the surrounding empty areas to avoid discontinuities. Note that the stiching is done based on metadata alone, without attempting image registration of overlapping borders.
+
+The script can be used for RGB true-color data, or for fluorescence data. The differences furtunately are not very big. RGB data is written into 24-bit RGB format, fluorescence data into 16-bit (per channel) format.
+
+It was developed on and for Zeiss AxioScan image data of Tissue Microsection Arrays where the definition of ROIs and as a consequence storage of data ended up weird. Initially it was used for RGB data only, later adapted for fluorescence as well.
+
 
 **czi_to_figures.ijm** (ImageJ macro) is a script for batch mode conversion of a whole directory of .czi image files to color images for presentation, publication, etc. This is the version for single-image .czi files. It includes options for...
 - selecting the channel-wise lookup table for export

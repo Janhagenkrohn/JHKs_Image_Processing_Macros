@@ -4,6 +4,10 @@ Created on Mar 25 2025
 
 @author: Jan-Hagen Krohn, IMCES-LMU, University Hospital Essen
 ABOUT
+
+THIS IS AN OUTDATED VERSION THAT IS ONLY KEPT IN THE REPOSITORY TEMPORARILY
+AS I HAVE NOT HAD THE CHANCE TO THROUGHLY TEST THE FUNCTION NEW VERSION
+
 This script  iterates over multi-scene czi files where each scene is a single 
 image or xy tile scan (RGB true color). It stitches those scences into a single 
 large image and imputes the RGB value for the surrounding empty areas to avoid 
