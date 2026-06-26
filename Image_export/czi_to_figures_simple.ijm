@@ -239,21 +239,27 @@ file_list = getFileList(input_folder);
 
 
 // Definitions
-scaleBarSizeOptions = newArray(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000);
+scaleBarSizeOptions = newArray(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000);
 
 settings_done = false;
 
 for (i = 0; i < file_list.length; i++)
 {
 	in_path = input_folder + file_list[i];
-	if (endsWith(in_path, ".czi")) 
+	if (endsWith(in_path, ".czi") || endsWith(in_path, ".tif")) 
 	{
 		// Shortened file name to be used in export
 		file_name_strip = split(file_list[i], ".");
-
-		// Open file, skipping BioFormats import wizard pop-up
-		s = "open=[" + in_path + "] autoscale color_mode=Grayscale rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT";
-		run("Bio-Formats Importer", s);
+		
+		if (endsWith(in_path, ".czi"))
+		{
+			// Open czi file, skipping BioFormats import wizard pop-up
+			s = "open=[" + in_path + "] autoscale color_mode=Grayscale rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT";
+			run("Bio-Formats Importer", s);
+		} else  // implies endsWith(in_path, ".tif")
+		{
+			open(in_path);
+		}
 		
 		
 		// Get image dimensions
