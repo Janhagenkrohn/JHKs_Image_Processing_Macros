@@ -67,10 +67,10 @@ for (i = 0; i < file_list.length; i++)
 		// Remove low-frequency information (background) from channel 1
 		selectImage("C1-" + originalImageName);
 		rename("00_c1_raw");
-		run("Duplicate...", "title=01_c1_Median");
+		run("Duplicate...", "title=01_c1_Median ignore");
 		selectImage("01_c1_Median");
 		run("Median...", "radius=" + medianFilterCh1);
-		run("Duplicate...", "title=02_c1_Background");
+		run("Duplicate...", "title=02_c1_Background ignore");
 		selectImage("02_c1_Background");
 		run("Subtract Background...", "rolling=" + rollingBallCh1 + " create sliding");
 		imageCalculator("Subtract create 32-bit", "01_c1_Median","02_c1_Background");
@@ -79,9 +79,6 @@ for (i = 0; i < file_list.length; i++)
 		rename("04_c1_background_removed");
 		
 		// Save and close images no longer required
-		selectImage("00_c1_raw");
-	    saveAs("Tiff", outputDirName + "00_c1_raw.tif");
-		close("00_c1_raw.tif");
 		selectImage("01_c1_Median");
 	    saveAs("Tiff", outputDirName + "01_c1_Median.tif");
 		close("01_c1_Median.tif");
@@ -92,10 +89,10 @@ for (i = 0; i < file_list.length; i++)
 		// Remove low-frequency information (background) from channel 2
 		selectImage("C2-" + originalImageName);
 		rename("00_c2_raw");
-		run("Duplicate...", "title=01_c2_Median");
+		run("Duplicate...", "title=01_c2_Median ignore");
 		selectImage("01_c2_Median");
 		run("Median...", "radius=" + medianFilterCh2);
-		run("Duplicate...", "title=02_c2_Background");
+		run("Duplicate...", "title=02_c2_Background ignore");
 		selectImage("02_c2_Background");
 		run("Subtract Background...", "rolling=" + rollingBallCh2 + " create sliding");
 		imageCalculator("Subtract create 32-bit", "01_c2_Median","02_c2_Background");
@@ -103,21 +100,100 @@ for (i = 0; i < file_list.length; i++)
 		imageCalculator("Subtract create 32-bit", "00_c2_raw","02_c2_Background");
 		rename("04_c2_background_removed");
 		
+		// Channel 3 filtering is easier
+		selectImage("C3-" + originalImageName);
+		rename("00_c3_raw");
+		selectImage("00_c3_raw");
+		run("Duplicate...", "title=01_c3_Median ignore");
+		selectImage("01_c3_Median");
+		run("Median...", "radius=" + medianFilterCh3);
+		
 		// Save and close images no longer required
-		selectImage("00_c2_raw");
-	    saveAs("Tiff", outputDirName + "00_c2_raw.tif");
-		close("00_c2_raw.tif");
 		selectImage("01_c2_Median");
 	    saveAs("Tiff", outputDirName + "01_c2_Median.tif");
 		close("01_c2_Median.tif");
 		selectImage("02_c2_Background");
 	    saveAs("Tiff", outputDirName + "02_c2_Background.tif");
 		close("02_c2_Background.tif");
+				
+		// Create a composite image for convenience during user interaction step
+		run("Merge Channels...", "c5=[00_c3_raw] c6=[00_c1_raw] c7=[00_c2_raw] create keep ignore");
+		selectImage("Composite");
+		
+		// Save and close images no longer required
+		selectImage("00_c1_raw");
+	    saveAs("Tiff", outputDirName + "00_c1_raw.tif");
+		close("00_c1_raw.tif");
+		selectImage("00_c2_raw");
+	    saveAs("Tiff", outputDirName + "00_c2_raw.tif");
+		close("00_c2_raw.tif");
+		
+		// Wait for user to finish drawing ROIs
+		waitForUser("Please draw one or more ROIs on the image to define the region(s) of interest.\n\n" +
+		            "Instructions:\n" +
+		            "1. Select the 'Polygon' or 'Rectangle' tool.\n" +
+		            "2. Draw ROIs around the areas you want to analyze.\n" +
+		            "3. Click 'Add' in the ROI Manager (or key 't') to register each ROI.\n" +
+		            "4. When done, click 'OK' below to continue.\n" +
+		            "Do not close, rename, or create any windows in ImageJ while doing this. \n" +
+		            "If you specify no ROIs, the entire image will be processed.\n");
+		            
+        // Remove the composite
+		close("Composite");
+		
+		// Check if any ROIs were added
+		if (roiManager("Count") == 0) {
+			
+		    // Dummy processing (actually just copying) for continuing without ROIs 
+		    selectImage("03_c1_median_background_removed");
+			run("Duplicate...", "title=05_c1_median_background_removed_masked ignore");
+		    selectImage("03_c2_median_background_removed");
+		    run("Duplicate...", "title=05_c2_median_background_removed_masked ignore");
+		    selectImage("01_c3_Median");
+		    run("Duplicate...", "title=05_c3_Median_masked ignore");
+
+		} else {
+		    // Merge all ROIs into a single ROI (OR logic) and delete signal outside 
+		    selectImage("03_c1_median_background_removed");
+			run("Duplicate...", "title=05_c1_median_background_removed_masked ignore");
+			roiManager("Combine");
+			run("Clear Outside");
+		    
+		    // Repeat for channel 2
+		    selectImage("03_c2_median_background_removed");
+		    run("Duplicate...", "title=05_c2_median_background_removed_masked ignore");
+			roiManager("Combine");
+			run("Clear Outside");
+		    
+		    // Repeat for channel 3
+		    selectImage("01_c3_Median");
+		    run("Duplicate...", "title=05_c3_Median_masked ignore");
+			roiManager("Combine");
+			run("Clear Outside");
+		    
+		} // END if (roiManager("Count") == 0)...
+
+	    // If needed, clear ROI manager
+		if (roiManager("Count") > 0){
+			roiManager("Delete"); 
+		} 
+	    run("Select All");
+		
+		// Save and close images no longer required
+		selectImage("03_c1_median_background_removed");
+	    saveAs("Tiff", outputDirName + "03_c1_median_background_removed.tif");
+		close("03_c1_median_background_removed.tif");
+		selectImage("03_c2_median_background_removed");
+	    saveAs("Tiff", outputDirName + "03_c2_median_background_removed.tif");
+		close("03_c2_median_background_removed.tif");		
+		selectImage("01_c3_Median");
+	    saveAs("Tiff", outputDirName + "01_c3_Median.tif");
+		close("01_c3_Median.tif");
 		
 		// Threshold channel 1
-		selectImage("03_c1_median_background_removed");
-		run("Duplicate...", "title=05_c1_Threshold");
-		selectImage("05_c1_Threshold");
+		selectImage("05_c1_median_background_removed_masked");
+		run("Duplicate...", "title=06_c1_Threshold ignore");
+		selectImage("06_c1_Threshold");
 		resetMinAndMax;
 		run("Enhance Contrast", "saturated=0.35");
 		setAutoThreshold(thresholdMethodCh1 + " dark no-reset");
@@ -125,14 +201,14 @@ for (i = 0; i < file_list.length; i++)
 		run("Convert to Mask");
 		
 		// Save and close images no longer required
-		selectImage("03_c1_median_background_removed");
-	    saveAs("Tiff", outputDirName + "03_c1_median_background_removed.tif");
-		close("03_c1_median_background_removed.tif");
+		selectImage("05_c1_median_background_removed_masked");
+	    saveAs("Tiff", outputDirName + "05_c1_median_background_removed_masked.tif");
+		close("05_c1_median_background_removed_masked.tif");
 		
 		// Threshold channel 2
-		selectImage("03_c2_median_background_removed");
-		run("Duplicate...", "title=05_c2_Threshold");
-		selectImage("05_c2_Threshold");
+		selectImage("05_c2_median_background_removed_masked");
+		run("Duplicate...", "title=06_c2_Threshold ignore");
+		selectImage("06_c2_Threshold");
 		resetMinAndMax;
 		run("Enhance Contrast", "saturated=0.35");
 		setAutoThreshold(thresholdMethodCh2 + " dark no-reset");
@@ -140,13 +216,28 @@ for (i = 0; i < file_list.length; i++)
 		run("Convert to Mask");
 		
 		// Save and close images no longer required
-		selectImage("03_c2_median_background_removed");
-	    saveAs("Tiff", outputDirName + "03_c2_median_background_removed.tif");
-		close("03_c2_median_background_removed.tif");
+		selectImage("05_c2_median_background_removed_masked");
+	    saveAs("Tiff", outputDirName + "05_c2_median_background_removed_masked.tif");
+		close("05_c2_median_background_removed_masked.tif");
+				
+		// Threshold channel 3
+		selectImage("05_c3_Median_masked");
+		run("Duplicate...", "title=06_c3_Threshold ignore");
+		selectImage("06_c3_Threshold");
+		resetMinAndMax;
+		run("Enhance Contrast", "saturated=0.35");
+		setAutoThreshold(thresholdMethodCh3 + " dark no-reset");
+		setOption("BlackBackground", true);
+		run("Convert to Mask");
 		
-		// Merge channel-wise masks into a global one, and perform some binary operations to get better particle masks
-		imageCalculator("OR create", "05_c1_Threshold","05_c2_Threshold");
-		rename("06_c1c2_particle_mask");
+		// Save and close images no longer required
+		selectImage("05_c3_Median_masked");
+	    saveAs("Tiff", outputDirName + "05_c3_Median_masked.tif");
+		close("05_c3_Median_masked.tif");
+		
+		// Merge ch1/ch2 channel-wise masks into a global one, and perform some binary operations to get better particle masks
+		imageCalculator("OR create", "06_c1_Threshold","06_c2_Threshold");
+		rename("07_c1c2_particle_mask");
 		run("Dilate");
 		run("Erode");
 		run("Erode");
@@ -154,29 +245,48 @@ for (i = 0; i < file_list.length; i++)
 		run("Watershed");
 
 		// Save and close images no longer required
-		selectImage("05_c1_Threshold");
-	    saveAs("Tiff", outputDirName + "05_c1_Threshold.tif");
-		close("05_c1_Threshold.tif");
-		selectImage("05_c2_Threshold");
-	    saveAs("Tiff", outputDirName + "05_c2_Threshold.tif");
-		close("05_c2_Threshold.tif");
+		selectImage("06_c1_Threshold");
+	    saveAs("Tiff", outputDirName + "06_c1_Threshold.tif");
+		close("06_c1_Threshold.tif");
+		selectImage("06_c2_Threshold");
+	    saveAs("Tiff", outputDirName + "06_c2_Threshold.tif");
+		close("06_c2_Threshold.tif");
 		
+		// Binary operations to avoid over- or undercounting in channel 3
+		selectImage("06_c3_Threshold");
+		run("Duplicate...",  "title=07_c3_particle_mask ignore");
+		selectImage("07_c3_particle_mask");
+		for (i_ED = 0; i_ED < n_ED; i_ED++) {
+			run("Erode");
+			}
+		for (i_ED = 0; i_ED < 2 * n_ED; i_ED++) {
+			run("Dilate");
+			}
+		for (i_ED = 0; i_ED < n_ED; i_ED++) {
+			run("Erode");
+			}
+		run("Fill Holes");
+		run("Watershed");
 		
+		// Save and close images no longer required
+		selectImage("06_c3_Threshold");
+	    saveAs("Tiff", outputDirName + "06_c3_Threshold.tif");
+		close("06_c3_Threshold.tif");
 		
-		// Get ROIs from particle mask
-		selectImage("06_c1c2_particle_mask");
-		run("Duplicate...", "title=07_c1c2_Particle_detection");
-		selectImage("07_c1c2_Particle_detection");
+		// Get ROIs from channel 1/2 particle mask
+		selectImage("07_c1c2_particle_mask");
+		run("Duplicate...", "title=08_c1c2_Particle_detection ignore");
+		selectImage("08_c1c2_Particle_detection");
 		run("Analyze Particles...", "size=" + minParticleSize + "-Infinity pixel clear overlay add composite");
 		numberOfRois = roiManager("count");
 		
 		// Save and close images no longer required
-		selectImage("06_c1c2_particle_mask");
-	    saveAs("Tiff", outputDirName + "06_c1c2_particle_mask.tif");
-		close("06_c1c2_particle_mask.tif");
-		selectImage("07_c1c2_Particle_detection");
-	    saveAs("PNG ", outputDirName + "07_c1c2_Particle_detection.png"); // This one as PNG to include the labels
-		close("07_c1c2_Particle_detection.png");
+		selectImage("07_c1c2_particle_mask");
+	    saveAs("Tiff", outputDirName + "07_c1c2_particle_mask.tif");
+		close("07_c1c2_particle_mask.tif");
+		selectImage("08_c1c2_Particle_detection");
+	    saveAs("PNG ", outputDirName + "08_c1c2_Particle_detection.png"); // This one as PNG to include the labels
+		close("08_c1c2_Particle_detection.png");
 				
 				
 		// Get parameters of particles in background-subtracted channel 1 and save results table
@@ -237,71 +347,25 @@ for (i = 0; i < file_list.length; i++)
 		selectImage("04_c2_background_removed");
 	    saveAs("Tiff", outputDirName + "04_c2_background_removed.tif");
 		close("04_c2_background_removed.tif");
-				
-		////////// Process channel 3 (nuclei) ////////// 
-		
-		// Filtering
-		selectImage("C3-" + originalImageName);
-		rename("00_c3_raw");
-		selectImage("00_c3_raw");
-		run("Duplicate...", "title=08_c3_Median");
-		selectImage("08_c3_Median");
-		run("Median...", "radius=" + medianFilterCh3);
-		
-		// Thresholding
-		selectImage("08_c3_Median");
-		run("Duplicate...", "title=09_c3_Threshold");
-		selectImage("09_c3_Threshold");
-		resetMinAndMax;
-		run("Enhance Contrast", "saturated=0.35");
-		setAutoThreshold(thresholdMethodCh3 + " dark no-reset");
-		setOption("BlackBackground", true);
-		run("Convert to Mask");
-	
-		// Save and close images no longer required
-		selectImage("08_c3_Median");
-		saveAs("Tiff", outputDirName + "08_c3_Median.tif");
-		close("08_c3_Median.tif");
-						
-		// Binary operations to avoid over- or undercounting
-		selectImage("09_c3_Threshold");
-		run("Duplicate...",  "title=10_c3_particle_mask");
-		selectImage("10_c3_particle_mask");
-		for (i_ED = 0; i_ED < n_ED; i_ED++) {
-			run("Erode");
-			}
-		for (i_ED = 0; i_ED < 2 * n_ED; i_ED++) {
-			run("Dilate");
-			}
-		for (i_ED = 0; i_ED < n_ED; i_ED++) {
-			run("Erode");
-			}
-		run("Fill Holes");
-		run("Watershed");
-		
-		// Save and close images no longer required
-		selectImage("09_c3_Threshold");
-	    saveAs("Tiff", outputDirName + "09_c3_Threshold.tif");
-		close("09_c3_Threshold.tif");
-				
-		// Detect particles
+							
+		// Detect particles for channel 3
 		if (roiManager("Count") > 0){
 			roiManager("Delete"); 
 		} // If needed, clear ROI manager to avoid pile-up chaos
 		close("Results");
-		selectImage("10_c3_particle_mask");
-		run("Duplicate...", "title=11_c3_Particle_detection");
-		selectImage("11_c3_Particle_detection");
+		selectImage("07_c3_particle_mask");
+		run("Duplicate...", "title=08_c3_Particle_detection ignore");
+		selectImage("08_c3_Particle_detection");
 		run("Analyze Particles...", "size=" + minParticleSize + "-Infinity pixel clear overlay add composite");
 		numberOfRois = roiManager("count");
 		
 		// Save and close images no longer required
-		selectImage("10_c3_particle_mask");
-	    saveAs("Tiff", outputDirName + "10_c3_particle_mask.tif");
-		close("10_c3_particle_mask.tif");
-		selectImage("11_c3_Particle_detection");
-	    saveAs("PNG", outputDirName + "11_c3_Particle_detection.png");
-		close("11_c3_Particle_detection.png");
+		selectImage("07_c3_particle_mask");
+	    saveAs("Tiff", outputDirName + "07_c3_particle_mask.tif");
+		close("07_c3_particle_mask.tif");
+		selectImage("08_c3_Particle_detection");
+	    saveAs("PNG", outputDirName + "08_c3_Particle_detection.png");
+		close("08_c3_Particle_detection.png");
 		
 		selectImage("00_c3_raw");
 		table_row = 0;
